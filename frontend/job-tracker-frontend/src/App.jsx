@@ -7,6 +7,12 @@ function App() {
     jobTitle: '',
     status: 'Applied',
   });
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({
+    companyName: '',
+    jobTitle: '',
+    status: 'Applied'
+  });
 
   // Fetch jobs from backend on page load
   useEffect(() => {
@@ -33,6 +39,33 @@ function App() {
     }
   };
 
+  const handleUpdate = async (id) => {
+  try {
+    const res = await fetch(`http://localhost:3000/jobs/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editForm)
+    });
+    const updated = await res.json();
+    setJobs(jobs.map((job) => (job._id === id ? updated : job)));
+    setEditingId(null);
+  } catch (err) {
+    console.error('Update failed:', err);
+  }
+};
+
+  const handleDelete = async (id) => {
+    try {
+      await fetch(`http://localhost:3000/jobs/${id}`, {
+        method: 'DELETE'
+      });
+      setJobs(jobs.filter(job => job._id !== id));
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
+  };
+
+  
   return (
     <div style={{ padding: '20px' }}>
       <h1>Job Application Tracker</h1>
@@ -64,9 +97,44 @@ function App() {
 
       <h2>Applications</h2>
       <ul>
-        {jobs.map((job, i) => (
-          <li key={i}>
-            <strong>{job.jobTitle}</strong> @ {job.companyName} — {job.status}
+        {jobs.map((job) => (
+          <li key={job._id}>
+            {editingId === job._id ? (
+              <>
+                <input
+                  value={editForm.companyName}
+                  onChange={(e) => setEditForm({ ...editForm, companyName: e.target.value })}
+                />
+                <input
+                  value={editForm.jobTitle}
+                  onChange={(e) => setEditForm({ ...editForm, jobTitle: e.target.value })}
+                />
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                >
+                  <option>Applied</option>
+                  <option>Interview</option>
+                  <option>Rejected</option>
+                  <option>Offer</option>
+                </select>
+                <button onClick={() => handleUpdate(job._id)}>✅ Save</button>
+                <button onClick={() => setEditingId(null)}>❌ Cancel</button>
+              </>
+            ) : (
+              <>
+                <strong>{job.jobTitle}</strong> @ {job.companyName} — {job.status}
+                <button onClick={() => {
+                  setEditingId(job._id);
+                  setEditForm({
+                    companyName: job.companyName,
+                    jobTitle: job.jobTitle,
+                    status: job.status
+                  });
+                }}>✏️ Edit</button>
+                <button onClick={() => handleDelete(job._id)}>❌</button>
+              </>
+            )}
           </li>
         ))}
       </ul>

@@ -1,5 +1,10 @@
-require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const app = express();
 const mongoose = require('mongoose');
+require('dotenv').config();
+
+const Job = require('./models/Job');
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -8,20 +13,12 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log('✅ MongoDB connected'))
 .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-const express = require('express');
-const cors = require('cors');
-const app = express();
-
 app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Job tracker API is running!');
 });
-
-app.listen(3000, () => console.log('Server started on port 3000'));
-
-const Job = require('./models/Job');
 
 // Add a job
 app.post('/jobs', async (req, res) => {
@@ -43,3 +40,25 @@ app.get('/jobs', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch jobs' });
   }
 });
+
+// Update a job
+app.put('/jobs/:id', async (req, res) => {
+  try {
+    const updated = await Job.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update job' });
+  }
+});
+
+// Delete a job
+app.delete('/jobs/:id', async (req, res) => {
+  try {
+    await Job.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Job deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete job' });
+  }
+});
+
+app.listen(3000, () => console.log('Server started on port 3000'));
