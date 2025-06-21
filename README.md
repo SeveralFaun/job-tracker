@@ -12,8 +12,7 @@ A full-stack web app to track job applications, built with **React**, **Node.js*
 - REST API to submit and fetch jobs
 - Frontend built with **React + Vite**
 - Backend built with **Node.js + Express**
-- Connected to MongoDB
-
+- Stores job data in MongoDB
 ---
 
 ## 🛠️ Planned Improvements
@@ -27,7 +26,7 @@ A full-stack web app to track job applications, built with **React**, **Node.js*
 ## 🧰 Tech Stack
 
 - **Frontend:** React, Vite, HTML, CSS
-- **Backend:** Node.js, Express
+- **Backend:** Node.js, Express, MongoDB, Mongoose
 - **Tools:** Git, GitHub, VSCode
 
 ---
