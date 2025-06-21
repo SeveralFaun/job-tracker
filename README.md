@@ -1,45 +1,47 @@
-# Job Application Tracker
-# IN PROGRESS*
+# 🗂️ Job Application Tracker
+> 🚧 **Work in progress**
 
-A full-stack web app to track job applications, built with **React** and **Express**.
+A full-stack web app to track job applications, built with **React**, **Node.js**, and **Express**.
 
-## Features
+---
+
+## ✅ Features
 
 - Add, view, and manage job applications
-- Track application status (Applied, Interview, Rejected, Offer)
+- Track status (Applied, Interview, Rejected, Offer)
+- REST API to submit and fetch jobs
 - Frontend built with **React + Vite**
 - Backend built with **Node.js + Express**
-- REST API to submit and fetch jobs
-- Local JSON/in-memory storage (for now)
+- Connected to MongoDB
 
-## Planned
+---
 
-- Edit and delete jobs
-- Connect to a database
-- Automate job tracking by parsing emails or scraping job sites
-- Add authentication and security
-- UI styling
+## 🛠️ Planned Improvements
 
-## Tech Stack
+- Email/job site parsing (for automation)
+- Authentication and role-based access
+- UI/UX styling
 
-- **Frontend**: React, Vite, HTML, CSS
-- **Backend**: Node.js, Express
-- **Dev Tools**: VSCode, Git, GitHub
+---
 
-## How to Run It Locally
+## 🧰 Tech Stack
 
-### 1. Clone this repo
+- **Frontend:** React, Vite, HTML, CSS
+- **Backend:** Node.js, Express
+- **Tools:** Git, GitHub, VSCode
+
+---
+
+## 🚀 Running It Locally
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/job-tracker.git
+# 1. Clone the repo
+git clone https://github.com/SeveralFaun/job-tracker.git
 cd job-tracker
-```
 
-### 2. Start the backend
-```bash
+# 2. Start the backend
 node index.js
-```
-Server will run at http://localhost:3000
+Server runs at: http://localhost:3000
 
 ### 3. Start the frontend
 ```bash
