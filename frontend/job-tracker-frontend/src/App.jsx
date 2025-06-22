@@ -40,19 +40,19 @@ function App() {
   };
 
   const handleUpdate = async (id) => {
-  try {
-    const res = await fetch(`http://localhost:3000/jobs/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editForm)
-    });
-    const updated = await res.json();
-    setJobs(jobs.map((job) => (job._id === id ? updated : job)));
-    setEditingId(null);
-  } catch (err) {
-    console.error('Update failed:', err);
-  }
-};
+    try {
+      const res = await fetch(`http://localhost:3000/jobs/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      });
+      const updated = await res.json();
+      setJobs(jobs.map((job) => (job._id === id ? updated : job)));
+      setEditingId(null);
+    } catch (err) {
+      console.error('Update failed:', err);
+    }
+  };
 
   const handleDelete = async (id) => {
     try {
@@ -124,6 +124,9 @@ function App() {
             ) : (
               <>
                 <strong>{job.jobTitle}</strong> @ {job.companyName} — {job.status}
+                <br />
+                <em>Applied on: {job.appliedDate ? new Date(job.appliedDate).toLocaleDateString() : "N/A"}</em>
+                <br />
                 <button onClick={() => {
                   setEditingId(job._id);
                   setEditForm({
