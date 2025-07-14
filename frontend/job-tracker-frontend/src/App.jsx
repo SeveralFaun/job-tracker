@@ -14,6 +14,7 @@ function App() {
     status: 'Applied'
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('dateDesc');
 
   // Fetch jobs from backend on page load
   useEffect(() => {
@@ -65,8 +66,18 @@ function App() {
       console.error('Delete failed:', err);
     }
   };
-
   
+  const sortedJobs = [...jobs].sort((a, b) => {
+    if (sortOption === 'dateDesc') {
+      return new Date(b.appliedDate) - new Date(a.appliedDate);
+    } else if (sortOption === 'dateAsc') {
+      return new Date(a.appliedDate) - new Date(b.appliedDate);
+    } else if (sortOption === 'status') {
+      return a.status.localeCompare(b.status);
+    }
+    return 0;
+  });
+
   return (
     <div style={{ padding: '20px' }}>
       <h1>Job Application Tracker</h1>
@@ -104,8 +115,16 @@ function App() {
         onChange={(e) => setSearchQuery(e.target.value)}
         style={{ marginTop: '10px', marginBottom: '20px', padding: '5px', width: '200px' }}
       />
+      <select
+        value={sortOption}
+        onChange={(e) => setSortOption(e.target.value)}
+      >
+        <option value="dateDesc">Sort by Date (Newest)</option>
+        <option value="dateAsc">Sort by Date (Oldest)</option>
+        <option value="status">Sort by Status (A-Z)</option>
+      </select>
       <ul>
-        {jobs
+        {sortedJobs
           .filter(job => {
             return job.companyName.toLowerCase().includes(searchQuery.toLowerCase()) || 
                    job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase());
