@@ -5,18 +5,13 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const Job = require('./models/Job');
-const fetchEmails = require('./scripts/email_parser');
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => {
-  console.log('MongoDB connected');
-  return fetchEmails();
-})
-.then(() => console.log('Initial email sync done'))
-.catch((err) => console.error('Initial sync failed:', err));
+.then(() => console.log('✅ MongoDB connected'))
+.catch((err) => console.error('❌ MongoDB connection error:', err));
 
 app.use(cors());
 app.use(express.json());
@@ -63,16 +58,6 @@ app.delete('/jobs/:id', async (req, res) => {
     res.json({ message: 'Job deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete job' });
-  }
-});
-
-app.post('/sync-emails', async (req, res) => {
-  try {
-    await fetchEmails();
-    res.send('Emails synced');
-  } catch (err) {
-    console.error('Email sync error:', err);
-    res.status(500).send('Failed to sync emails');
   }
 });
 
