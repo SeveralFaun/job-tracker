@@ -13,6 +13,7 @@ function App() {
     jobTitle: '',
     status: 'Applied'
   });
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch jobs from backend on page load
   useEffect(() => {
@@ -96,8 +97,20 @@ function App() {
       </form>
 
       <h2>Applications</h2>
+      <input
+        type="text"
+        placeholder="Search by job title or company"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        style={{ marginTop: '10px', marginBottom: '20px', padding: '5px', width: '200px' }}
+      />
       <ul>
-        {jobs.map((job) => (
+        {jobs
+          .filter(job => {
+            return job.companyName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                   job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase());
+          })
+          .map((job) => (
           <li key={job._id}>
             {editingId === job._id ? (
               <>

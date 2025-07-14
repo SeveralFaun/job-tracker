@@ -23,6 +23,12 @@ app.get('/', (req, res) => {
 // Add a job
 app.post('/jobs', async (req, res) => {
   try {
+    // Check for duplicate job by title and company
+    const { title, company } = req.body;
+    const duplicate = await Job.findOne({ title, company });
+    if (duplicate) {
+      return res.status(409).json({ error: 'Duplicate job entry' });
+    }
     const job = new Job(req.body);
     const saved = await job.save();
     res.status(201).json(saved);
