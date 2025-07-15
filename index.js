@@ -23,9 +23,10 @@ const requireAuth = require('./middleware/requireAuth');
 
 //app.use('/jobs', requireAuth, require('./routes/jobs'));
 
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
+
 mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
 })
 .then(() => console.log('✅ MongoDB connected'))
 .catch((err) => console.error('❌ MongoDB connection error:', err));
