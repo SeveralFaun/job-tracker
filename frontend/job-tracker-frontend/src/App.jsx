@@ -16,12 +16,37 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('dateDesc');
 
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   // Fetch jobs from backend on page load
   useEffect(() => {
-    fetch('http://localhost:3000/jobs')
-      .then((res) => res.json())
-      .then((data) => setJobs(data))
-      .catch((err) => console.error('Error fetching jobs:', err));
+    const fetchJobs = async () => {
+      try {
+        const meRes = await fetch('http://localhost:3000/me', {
+          credentials: 'include'
+        });
+
+        if (!meRes.ok) {
+          throw new Error('Failed to fetch user');
+        }
+
+        const userData = await meRes.json();
+        setUser(userData);
+
+        const jobsRes = await fetch('http://localhost:3000/jobs', {
+          credentials: 'include'
+        });
+
+        const jobsData = await jobsRes.json();
+        setJobs(jobsData);
+      } catch (err) {
+        console.error('Error fetching jobs:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
   }, []);
 
   // Add new job

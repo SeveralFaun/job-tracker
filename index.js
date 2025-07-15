@@ -2,9 +2,26 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const mongoose = require('mongoose');
-require('dotenv').config();
+const dotenv = require('dotenv');
+dotenv.config();
 
 const Job = require('./models/Job');
+
+const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
+
+app.use(cookieParser());
+
+const csrfProtection = csrf({ cookie: true });
+app.use(csrfProtection);
+
+app.get('/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+const requireAuth = require('./middleware/requireAuth');
+
+//app.use('/jobs', requireAuth, require('./routes/jobs'));
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
