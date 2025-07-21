@@ -5,6 +5,11 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config();
 
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
 const Job = require('./models/Job');
 
 const cookieParser = require('cookie-parser');
@@ -31,7 +36,7 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log('✅ MongoDB connected'))
 .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-app.use(cors());
+
 app.use(express.json());
 
 app.get('/', (req, res) => {

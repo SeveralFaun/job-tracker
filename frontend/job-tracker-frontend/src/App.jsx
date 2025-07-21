@@ -108,7 +108,7 @@ function App() {
         alert("Registration successful! Please login.");
         setRegisterForm({ email: "", password: "" });
       } else {
-        akert("Registration failed. Please try again.");
+        alert("Registration failed. Please try again.");
       }
     } catch (err) {
       console.error("Registration error:", err);
