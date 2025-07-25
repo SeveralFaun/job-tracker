@@ -26,7 +26,8 @@ function App() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const meRes = await fetch("http://localhost:3000/me", {
+        const meRes = await fetch("http://localhost:3000/auth/me", {
+          method: "GET",
           credentials: "include",
         });
 
@@ -34,14 +35,25 @@ function App() {
           throw new Error("Failed to fetch user");
         }
 
-        const userData = await meRes.json();
-        setUser(userData);
+        let userData = null;
+        try {
+          userData = await meRes.json();
+        } catch (err) {
+          console.error("Failed to parse user data:", err);
+          return;
+        }
 
         const jobsRes = await fetch("http://localhost:3000/jobs", {
           credentials: "include",
         });
 
-        const jobsData = await jobsRes.json();
+        let jobsData = [];
+        if (jobsRes.ok) {
+          jobsData = await jobsRes.json();
+        } else {
+          console.error("Failed to fetch jobs:", err);
+          return;
+        }
         setJobs(jobsData);
       } catch (err) {
         console.error("Error fetching jobs:", err);
@@ -59,6 +71,7 @@ function App() {
       const res = await fetch("http://localhost:3000/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(form),
       });
       const newJob = await res.json();
@@ -98,12 +111,14 @@ function App() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
+      console.log("Registering user:", registerForm);
       const res = await fetch("http://localhost:3000/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(registerForm),
       });
+      console.log("Registration response:", res);
       if (res.ok) {
         alert("Registration successful! Please login.");
         setRegisterForm({ email: "", password: "" });

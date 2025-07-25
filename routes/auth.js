@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const requireAuth = require('../middleware/requireAuth');
 
 // Register a new user
 router.post('/register', async (req, res) => {
@@ -19,6 +20,7 @@ router.post('/register', async (req, res) => {
 
         res.status(201).json({ message: 'User registered successfully' });
     } catch (err) {
+        console.error('Error registering user:', err);
         res.status(500).json({ error: 'Failed to register user' });
     }
 });
@@ -56,8 +58,8 @@ router.post('/logout', (req, res) => {
     res.clearCookie('token').json({ message: 'Logged out successfully' });
 });
 
-router.get('/me', async (req, res) => {
-    res.json(req.user);
+router.get('/me', requireAuth, async (req, res) => {
+    res.json(req.user || null);
 });
 
 module.exports = router;
