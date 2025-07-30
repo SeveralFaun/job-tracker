@@ -1,19 +1,18 @@
 const express = require('express');
 const cors = require('cors');
-const app = express();
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
+
 dotenv.config();
+
+const app = express();
 
 app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true
 }));
-
-const Job = require('./models/Job');
-
-const cookieParser = require('cookie-parser');
-const csrf = require('csurf');
 
 app.use(express.json());
 app.use(cookieParser());
@@ -26,26 +25,19 @@ app.get('/csrf-token', (req, res) => {
 });
 
 const requireAuth = require('./middleware/requireAuth');
-
-//app.use('/jobs', requireAuth, require('./routes/jobs'));
-
 const authRoutes = require('./routes/auth');
+const jobRoutes = require('./routes/jobs');
+
 app.use('/auth', authRoutes);
-
-mongoose.connect(process.env.MONGO_URI, {
-})
-.then(() => console.log('✅ MongoDB connected'))
-.catch((err) => console.error('❌ MongoDB connection error:', err));
-
-
-
+app.use('/jobs', requireAuth, jobRoutes);
 
 app.get('/', (req, res) => {
   res.send('Job tracker API is running!');
 });
 
-const jobRoutes = require('./routes/jobs');
-app.use('/jobs', requireAuth, jobRoutes);
-
+mongoose.connect(process.env.MONGO_URI, {
+})
+.then(() => console.log('MongoDB connected'))
+.catch((err) => console.error('MongoDB connection error:', err));
 
 app.listen(3000, () => console.log('Server started on port 3000')); 

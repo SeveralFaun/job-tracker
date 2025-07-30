@@ -55,7 +55,10 @@ router.post('/login', async (req, res) => {
 
 // Logout user
 router.post('/logout', (req, res) => {
-    res.clearCookie('token').json({ message: 'Logged out successfully' });
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+    }).json({ message: 'Logged out successfully' });
 });
 
 router.get('/me', requireAuth, async (req, res) => {

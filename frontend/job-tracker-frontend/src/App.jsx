@@ -2,67 +2,99 @@ import { useState, useEffect } from "react";
 
 function App() {
   const [jobs, setJobs] = useState([]);
-  const [form, setForm] = useState({
+  const [editingId, setEditingId] = useState(null);
+  const [jobForm, setJobForm] = useState({
     companyName: "",
     jobTitle: "",
     status: "Applied",
   });
-  const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     companyName: "",
     jobTitle: "",
     status: "Applied",
   });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState("dateDesc");
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const [csrfToken, setCsrfToken] = useState("");
+    
   const [registerForm, setRegisterForm] = useState({ email: "", password: "" });
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
 
-  // Fetch jobs from backend on page load
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState("dateDesc");
+  
+
+  // Fetch jobs from backend based on user authentication
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const meRes = await fetch("http://localhost:3000/auth/me", {
+    fetch("http://localhost:3000/csrf-token", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setCsrfToken(data.csrfToken);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch CSRF token:", err);
+      });
+    
+    (async () => {
+      const userFetched = await fetchUser();
+      if (userFetched) {
+        await fetchJobs();
+      }
+    })();
+  }, []);
+
+
+  const fetchUser = async () => {
+    try {
+        const res = await fetch("http://localhost:3000/auth/me", {
           method: "GET",
           credentials: "include",
         });
 
-        if (!meRes.ok) {
+        if (!res.ok) {
+          if (res.status === 401) {
+            setLoading(false);
+            return false;
+          }
           throw new Error("Failed to fetch user");
         }
 
-        let userData = null;
-        try {
-          userData = await meRes.json();
-        } catch (err) {
-          console.error("Failed to parse user data:", err);
-          return;
-        }
-
-        const jobsRes = await fetch("http://localhost:3000/jobs", {
+        const userData = await res.json();
+        setUser(userData);
+        setLoading(false);
+        return true;
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        setUser(null);
+        setLoading(false);
+        return false;
+      }
+    };
+  const fetchJobs = async () => {
+      
+      setLoading(true);
+      try {
+        const res = await fetch("http://localhost:3000/jobs", {
+          method: "GET",
           credentials: "include",
         });
 
-        let jobsData = [];
-        if (jobsRes.ok) {
-          jobsData = await jobsRes.json();
-        } else {
-          console.error("Failed to fetch jobs:", err);
-          return;
+        if (!res.ok) {
+          throw new Error("Failed to fetch jobs");
         }
+        
+        const jobsData = await res.json();
         setJobs(jobsData);
+        setLoading(false);
       } catch (err) {
-        console.error("Error fetching jobs:", err);
-      } finally {
+        console.error("Error fetching user data:", err);
         setLoading(false);
       }
     };
-    fetchJobs();
-  }, []);
 
   // Add new job
   const handleSubmit = async (e) => {
@@ -70,13 +102,21 @@ function App() {
     try {
       const res = await fetch("http://localhost:3000/jobs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify(jobForm),
         credentials: "include",
-        body: JSON.stringify(form),
       });
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert(errorData.error);
+        return;
+      }
       const newJob = await res.json();
       setJobs([...jobs, newJob]);
-      setForm({ companyName: "", jobTitle: "", status: "Applied" });
+      setJobForm({ companyName: "", jobTitle: "", status: "Applied" });
     } catch (err) {
       console.error("Error adding job:", err);
     }
@@ -86,8 +126,12 @@ function App() {
     try {
       const res = await fetch(`http://localhost:3000/jobs/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "CSRF-Token": csrfToken,
+        },
         body: JSON.stringify(editForm),
+        credentials: "include",
       });
       const updated = await res.json();
       setJobs(jobs.map((job) => (job._id === id ? updated : job)));
@@ -101,6 +145,8 @@ function App() {
     try {
       await fetch(`http://localhost:3000/jobs/${id}`, {
         method: "DELETE",
+        headers: { "CSRF-Token": csrfToken },
+        credentials: "include",
       });
       setJobs(jobs.filter((job) => job._id !== id));
     } catch (err) {
@@ -114,7 +160,10 @@ function App() {
       console.log("Registering user:", registerForm);
       const res = await fetch("http://localhost:3000/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "CSRF-Token": csrfToken,
+        },
         credentials: "include",
         body: JSON.stringify(registerForm),
       });
@@ -135,7 +184,10 @@ function App() {
     try {
       const res = await fetch("http://localhost:3000/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "CSRF-Token": csrfToken,
+        },
         credentials: "include",
         body: JSON.stringify(loginForm),
       });
@@ -146,8 +198,24 @@ function App() {
       } else {
         alert("Login failed. Please check your credentials.");
       }
+
+      window.location.reload();
     } catch (err) {
       console.error("Login error:", err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/auth/logout", {
+        method: "POST",
+        headers: { "CSRF-Token": csrfToken },
+        credentials: "include",
+      });
+      setUser(null);
+      setJobs([]);
+    } catch (err) {
+      console.error("Logout error:", err);
     }
   };
 
@@ -218,24 +286,29 @@ function App() {
         <div style={{ marginBottom: "20px" }}>
           <h1>Job Application Tracker</h1>
 
+          <button onClick={handleLogout}>Logout</button>
+
           <form onSubmit={handleSubmit}>
             <input
+              name="companyName"
               placeholder="Company"
-              value={form.companyName}
+              value={jobForm.companyName}
               onChange={(e) =>
-                setForm({ ...form, companyName: e.target.value })
+                setJobForm({ ...jobForm, companyName: e.target.value })
               }
               required
             />
             <input
+              name="jobTitle"
               placeholder="Job Title"
-              value={form.jobTitle}
-              onChange={(e) => setForm({ ...form, jobTitle: e.target.value })}
+              value={jobForm.jobTitle}
+              onChange={(e) => setJobForm({ ...jobForm, jobTitle: e.target.value })}
               required
             />
             <select
-              value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value })}
+              name="status"
+              value={jobForm.status}
+              onChange={(e) => setJobForm({ ...jobForm, status: e.target.value })}
             >
               <option>Applied</option>
               <option>Interview</option>
@@ -270,10 +343,12 @@ function App() {
             {sortedJobs
               .filter((job) => {
                 return (
-                  job.companyName
+                  (job.companyName ?? "")
                     .toLowerCase()
                     .includes(searchQuery.toLowerCase()) ||
-                  job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase())
+                  (job.jobTitle ?? "")
+                    .toLowerCase() 
+                    .includes(searchQuery.toLowerCase())
                 );
               })
               .map((job) => (

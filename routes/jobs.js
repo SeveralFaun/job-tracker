@@ -7,12 +7,22 @@ router.use(requireAuth);
 
 router.post('/', async (req, res) => {
   try {
-    // Check for duplicate job by title and company
-    const { title, company } = req.body;
-    const duplicate = await Job.findOne({ title, company, user: req.user.id });
-    if (duplicate) {
-      return res.status(409).json({ error: 'Duplicate job entry' });
+    // Check if duplicate job exists
+    const { companyName, jobTitle } = req.body;
+    const userId = req.user.id;
+    if (!companyName || !jobTitle) {
+      return res.status(400).json({ error: 'All fields are required' });
     }
+    const existingJob = await Job.findOne({
+      companyName,
+      jobTitle,
+      user: userId
+    });
+
+    if (existingJob) {
+      return res.status(400).json({ error: 'Job already exists' });
+    }
+
     const job = new Job({ ...req.body, user: req.user.id });
     const saved = await job.save();
     res.status(201).json(saved);
