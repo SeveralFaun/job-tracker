@@ -10,7 +10,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ["http://localhost:5173", "http://3.18.108.8/3000"],
   credentials: true
 }));
 
