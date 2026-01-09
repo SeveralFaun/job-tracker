@@ -1,45 +1,37 @@
-# 🗂️ Job Application Tracker
-> 🚧 **Work in progress**
+# Job Application Tracker
 
-A full-stack web app to track job applications, built with **React**, **Node.js**, and **Express**.
+A full-stack web app to track job applications and manage statuses, notes, and follow-ups. Built with React (Vite), Node.js/Express, and MongoDB.
 
----
+## Features
 
-## ✅ Features
-
-- Add, view, and manage job applications
+- Add, view, edit, and delete job applications
 - Track status (Applied, Interview, Rejected, Offer)
-- REST API to submit and fetch jobs
-- Frontend built with **React + Vite**
-- Backend built with **Node.js + Express**
-- Stores job data in MongoDB
+- Search and sort applications
+- REST API for submitting and fetching jobs
+- Frontend built with React + Vite
+- Backend built with Node.js + Express
+- Stores job data in MongoDB (Mongoose)
+
+## Demo
+
+### App preview
+
+Dashboard:
+![Dashboard](demo/jobtracker.png)
+
+Login Page:
+![Login Page](demo/login.png)
 
 ---
 
-## ✉️ Email Integration (WIP)
+## Email Integration (WIP)
+
+In progress on the `email_parser` branch (not merged to `main` yet):
 
 - Connects to Gmail via IMAP
-- Parses recent unread emails for job application confirmations
-- Automatically sends matched applications to the backend and stores them in MongoDB
-- Uses basic keyword filtering (`"thank you for applying"`, `"application received"`, etc.)
-- Feature currently in progress in [email_parser](https://github.com/SeveralFaun/job-tracker/tree/email_parser) branch
-
----
-
-## 🛠️ Planned Improvements
-
-- Improved job title/company extraction from email parser
-- Job site scraping (e.g. LinkedIn)
-- Authentication and role-based access
-- UI/UX styling
-
----
-
-## 🧰 Tech Stack
-
-- **Frontend:** React, Vite, HTML, CSS
-- **Backend:** Node.js, Express, MongoDB, Mongoose
-- **Tools:** Git, GitHub, VSCode
+- Parses unread emails for job application confirmations
+- Matches emails using basic keyword filtering (e.g., "thank you for applying", "application received")
+- Sends matched entries to the backend and stores them in MongoDB
 
 ---
 
