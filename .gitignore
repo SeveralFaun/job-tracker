@@ -14,3 +14,12 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Documentation (local setup guides)
+DEPLOYMENT.md
+QUICK_START.md
+MODERNIZATION_SUMMARY.md
+COMPLETION_SUMMARY.md
+DESIGN.md
+INDEX.md
+.env.example

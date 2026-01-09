@@ -45,9 +45,10 @@ router.post('/login', async (req, res) => {
         // Set token in cookie
         res.cookie('token', token, { 
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production'
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
         })
-        .json({ message: 'Login successful', token });
+        .json({ _id: user._id, email: user.email });
     } catch (err) {
         res.status(500).json({ error: 'Failed to login' });
     }

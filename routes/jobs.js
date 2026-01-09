@@ -9,7 +9,7 @@ router.post('/', async (req, res) => {
   try {
     // Check if duplicate job exists
     const { companyName, jobTitle } = req.body;
-    const userId = req.user.id;
+    const userId = req.user._id;
     if (!companyName || !jobTitle) {
       return res.status(400).json({ error: 'All fields are required' });
     }
@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Job already exists' });
     }
 
-    const job = new Job({ ...req.body, user: req.user.id });
+    const job = new Job({ ...req.body, user: req.user._id });
     const saved = await job.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
 // Get all jobs
 router.get('/', async (req, res) => {
   try {
-    const jobs = await Job.find({ user: req.user.id });
+    const jobs = await Job.find({ user: req.user._id });
     res.json(jobs);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch jobs' });

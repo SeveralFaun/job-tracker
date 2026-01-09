@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import "./App.css";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 function App() {
   const [jobs, setJobs] = useState([]);
@@ -17,28 +20,74 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [csrfToken, setCsrfToken] = useState("");
-    
+  const [showLoginForm, setShowLoginForm] = useState(true);
   const [registerForm, setRegisterForm] = useState({ email: "", password: "" });
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("dateDesc");
-  
 
-  // Fetch jobs from backend based on user authentication
-  useEffect(() => {
-    fetch("http://localhost:3000/csrf-token", {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setCsrfToken(data.csrfToken);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch CSRF token:", err);
+  // Fetch CSRF token
+  const fetchCsrfToken = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/csrf-token`, {
+        method: "GET",
+        credentials: "include",
       });
-    
+      const data = await res.json();
+      setCsrfToken(data.csrfToken);
+    } catch (err) {
+      console.error("Failed to fetch CSRF token:", err);
+    }
+  };
+
+  // Fetch current user
+  const fetchUser = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        setUser(null);
+        setLoading(false);
+        return false;
+      }
+
+      const userData = await res.json();
+      setUser(userData);
+      setLoading(false);
+      return true;
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      setUser(null);
+      setLoading(false);
+      return false;
+    }
+  };
+
+  // Fetch all jobs
+  const fetchJobs = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/jobs`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch jobs");
+      }
+
+      const jobsData = await res.json();
+      setJobs(jobsData);
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+    }
+  };
+
+  // Initialize on mount
+  useEffect(() => {
+    fetchCsrfToken();
     (async () => {
       const userFetched = await fetchUser();
       if (userFetched) {
@@ -47,62 +96,13 @@ function App() {
     })();
   }, []);
 
-
-  const fetchUser = async () => {
-    try {
-        const res = await fetch("http://localhost:3000/auth/me", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            setLoading(false);
-            return false;
-          }
-          throw new Error("Failed to fetch user");
-        }
-
-        const userData = await res.json();
-        setUser(userData);
-        setLoading(false);
-        return true;
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-        setUser(null);
-        setLoading(false);
-        return false;
-      }
-    };
-  const fetchJobs = async () => {
-      
-      setLoading(true);
-      try {
-        const res = await fetch("http://localhost:3000/jobs", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch jobs");
-        }
-        
-        const jobsData = await res.json();
-        setJobs(jobsData);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-        setLoading(false);
-      }
-    };
-
   // Add new job
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:3000/jobs", {
+      const res = await fetch(`${API_BASE_URL}/jobs`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "CSRF-Token": csrfToken,
         },
@@ -122,11 +122,12 @@ function App() {
     }
   };
 
+  // Update a job
   const handleUpdate = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/jobs/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/jobs/${id}`, {
         method: "PUT",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "CSRF-Token": csrfToken,
         },
@@ -141,9 +142,10 @@ function App() {
     }
   };
 
+  // Delete a job
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://localhost:3000/jobs/${id}`, {
+      await fetch(`${API_BASE_URL}/jobs/${id}`, {
         method: "DELETE",
         headers: { "CSRF-Token": csrfToken },
         credentials: "include",
@@ -154,23 +156,23 @@ function App() {
     }
   };
 
+  // Register user
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      console.log("Registering user:", registerForm);
-      const res = await fetch("http://localhost:3000/auth/register", {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "CSRF-Token": csrfToken,
         },
         credentials: "include",
         body: JSON.stringify(registerForm),
       });
-      console.log("Registration response:", res);
       if (res.ok) {
         alert("Registration successful! Please login.");
         setRegisterForm({ email: "", password: "" });
+        setShowLoginForm(true);
       } else {
         alert("Registration failed. Please try again.");
       }
@@ -179,12 +181,13 @@ function App() {
     }
   };
 
+  // Login user
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:3000/auth/login", {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "CSRF-Token": csrfToken,
         },
@@ -195,19 +198,19 @@ function App() {
         const userData = await res.json();
         setUser(userData);
         setLoginForm({ email: "", password: "" });
+        await fetchJobs();
       } else {
         alert("Login failed. Please check your credentials.");
       }
-
-      window.location.reload();
     } catch (err) {
       console.error("Login error:", err);
     }
   };
 
+  // Logout user
   const handleLogout = async () => {
     try {
-      const res = await fetch("http://localhost:3000/auth/logout", {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
         method: "POST",
         headers: { "CSRF-Token": csrfToken },
         credentials: "include",
@@ -230,194 +233,301 @@ function App() {
     return 0;
   });
 
+  const filteredJobs = sortedJobs.filter((job) => {
+    return (
+      (job.companyName ?? "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (job.jobTitle ?? "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  });
+
+  if (loading) {
+    return <div className="loader">Loading...</div>;
+  }
+
   return (
-    <div style={{ padding: "20px" }}>
-      {!user && !loading && (
-        <div style={{ marginBottom: "20px" }}>
-          <h2>Login or Register</h2>
+    <div className="app-container">
+      {!user ? (
+        <div className="auth-container">
+          <div className="auth-card">
+            <h1 className="app-title">Job Tracker</h1>
+            <p className="app-subtitle">Track your job applications</p>
 
-          <form onSubmit={handleRegister}>
-            <h3>Register</h3>
-            <input
-              type="email"
-              placeholder="Email"
-              value={registerForm.email}
-              onChange={(e) =>
-                setRegisterForm({ ...registerForm, email: e.target.value })
-              }
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={registerForm.password}
-              onChange={(e) =>
-                setRegisterForm({ ...registerForm, password: e.target.value })
-              }
-              required
-            />
-            <button type="submit">Register</button>
-          </form>
-          <form onSubmit={handleLogin}>
-            <h3>Login</h3>
-            <input
-              type="email"
-              placeholder="Email"
-              value={loginForm.email}
-              onChange={(e) =>
-                setLoginForm({ ...loginForm, email: e.target.value })
-              }
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={loginForm.password}
-              onChange={(e) =>
-                setLoginForm({ ...loginForm, password: e.target.value })
-              }
-              required
-            />
-            <button type="submit">Login</button>
-          </form>
+            <div className="auth-tabs">
+              <button
+                className={`auth-tab ${showLoginForm ? "active" : ""}`}
+                onClick={() => setShowLoginForm(true)}
+              >
+                Login
+              </button>
+              <button
+                className={`auth-tab ${!showLoginForm ? "active" : ""}`}
+                onClick={() => setShowLoginForm(false)}
+              >
+                Register
+              </button>
+            </div>
+
+            {showLoginForm ? (
+              <form onSubmit={handleLogin} className="auth-form">
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={loginForm.email}
+                    onChange={(e) =>
+                      setLoginForm({ ...loginForm, email: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={loginForm.password}
+                    onChange={(e) =>
+                      setLoginForm({ ...loginForm, password: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary">
+                  Login
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleRegister} className="auth-form">
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={registerForm.email}
+                    onChange={(e) =>
+                      setRegisterForm({ ...registerForm, email: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={registerForm.password}
+                    onChange={(e) =>
+                      setRegisterForm({
+                        ...registerForm,
+                        password: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary">
+                  Register
+                </button>
+              </form>
+            )}
+          </div>
         </div>
-      )}
-      {user && !loading && (
-        <div style={{ marginBottom: "20px" }}>
-          <h1>Job Application Tracker</h1>
+      ) : (
+        <div className="main-container">
+          <header className="app-header">
+            <div className="header-content">
+              <h1 className="app-title">Job Tracker</h1>
+              <button onClick={handleLogout} className="btn btn-logout">
+                Logout
+              </button>
+            </div>
+          </header>
 
-          <button onClick={handleLogout}>Logout</button>
+          <main className="app-main">
+            <div className="add-job-section">
+              <h2>Add New Application</h2>
+              <form onSubmit={handleSubmit} className="job-form">
+                <div className="form-row">
+                  <div className="form-group">
+                    <input
+                      name="companyName"
+                      placeholder="Company Name"
+                      value={jobForm.companyName}
+                      onChange={(e) =>
+                        setJobForm({ ...jobForm, companyName: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <input
+                      name="jobTitle"
+                      placeholder="Job Title"
+                      value={jobForm.jobTitle}
+                      onChange={(e) =>
+                        setJobForm({ ...jobForm, jobTitle: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <select
+                      name="status"
+                      value={jobForm.status}
+                      onChange={(e) =>
+                        setJobForm({ ...jobForm, status: e.target.value })
+                      }
+                    >
+                      <option>Applied</option>
+                      <option>Interview</option>
+                      <option>Rejected</option>
+                      <option>Offer</option>
+                    </select>
+                  </div>
+                  <button type="submit" className="btn btn-primary">
+                    Add Job
+                  </button>
+                </div>
+              </form>
+            </div>
 
-          <form onSubmit={handleSubmit}>
-            <input
-              name="companyName"
-              placeholder="Company"
-              value={jobForm.companyName}
-              onChange={(e) =>
-                setJobForm({ ...jobForm, companyName: e.target.value })
-              }
-              required
-            />
-            <input
-              name="jobTitle"
-              placeholder="Job Title"
-              value={jobForm.jobTitle}
-              onChange={(e) => setJobForm({ ...jobForm, jobTitle: e.target.value })}
-              required
-            />
-            <select
-              name="status"
-              value={jobForm.status}
-              onChange={(e) => setJobForm({ ...jobForm, status: e.target.value })}
-            >
-              <option>Applied</option>
-              <option>Interview</option>
-              <option>Rejected</option>
-              <option>Offer</option>
-            </select>
-            <button type="submit">Add Job</button>
-          </form>
+            <div className="jobs-section">
+              <div className="jobs-header">
+                <h2>Your Applications</h2>
+                <div className="controls">
+                  <input
+                    type="text"
+                    placeholder="Search by title or company..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
+                  <select
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                    className="sort-select"
+                  >
+                    <option value="dateDesc">Newest First</option>
+                    <option value="dateAsc">Oldest First</option>
+                    <option value="status">Status (A-Z)</option>
+                  </select>
+                </div>
+              </div>
 
-          <h2>Applications</h2>
-          <input
-            type="text"
-            placeholder="Search by job title or company"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              marginTop: "10px",
-              marginBottom: "20px",
-              padding: "5px",
-              width: "200px",
-            }}
-          />
-          <select
-            value={sortOption}
-            onChange={(e) => setSortOption(e.target.value)}
-          >
-            <option value="dateDesc">Sort by Date (Newest)</option>
-            <option value="dateAsc">Sort by Date (Oldest)</option>
-            <option value="status">Sort by Status (A-Z)</option>
-          </select>
-          <ul>
-            {sortedJobs
-              .filter((job) => {
-                return (
-                  (job.companyName ?? "")
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase()) ||
-                  (job.jobTitle ?? "")
-                    .toLowerCase() 
-                    .includes(searchQuery.toLowerCase())
-                );
-              })
-              .map((job) => (
-                <li key={job._id}>
-                  {editingId === job._id ? (
-                    <>
-                      <input
-                        value={editForm.companyName}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            companyName: e.target.value,
-                          })
-                        }
-                      />
-                      <input
-                        value={editForm.jobTitle}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, jobTitle: e.target.value })
-                        }
-                      />
-                      <select
-                        value={editForm.status}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, status: e.target.value })
-                        }
-                      >
-                        <option>Applied</option>
-                        <option>Interview</option>
-                        <option>Rejected</option>
-                        <option>Offer</option>
-                      </select>
-                      <button onClick={() => handleUpdate(job._id)}>
-                        ✅ Save
-                      </button>
-                      <button onClick={() => setEditingId(null)}>
-                        ❌ Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <strong>{job.jobTitle}</strong> @ {job.companyName} —{" "}
-                      {job.status}
-                      <br />
-                      <em>
-                        Applied on:{" "}
-                        {job.appliedDate
-                          ? new Date(job.appliedDate).toLocaleDateString()
-                          : "N/A"}
-                      </em>
-                      <br />
-                      <button
-                        onClick={() => {
-                          setEditingId(job._id);
-                          setEditForm({
-                            companyName: job.companyName,
-                            jobTitle: job.jobTitle,
-                            status: job.status,
-                          });
-                        }}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button onClick={() => handleDelete(job._id)}>❌</button>
-                    </>
-                  )}
-                </li>
-              ))}
-          </ul>
+              {filteredJobs.length === 0 ? (
+                <div className="no-jobs">
+                  <p>No applications yet. Start tracking your job applications!</p>
+                </div>
+              ) : (
+                <div className="jobs-grid">
+                  {filteredJobs.map((job) => (
+                    <div key={job._id} className="job-card">
+                      {editingId === job._id ? (
+                        <div className="job-edit-mode">
+                          <div className="form-group">
+                            <input
+                              value={editForm.companyName}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  companyName: e.target.value,
+                                })
+                              }
+                              placeholder="Company Name"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <input
+                              value={editForm.jobTitle}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  jobTitle: e.target.value,
+                                })
+                              }
+                              placeholder="Job Title"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <select
+                              value={editForm.status}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  status: e.target.value,
+                                })
+                              }
+                            >
+                              <option>Applied</option>
+                              <option>Interview</option>
+                              <option>Rejected</option>
+                              <option>Offer</option>
+                            </select>
+                          </div>
+                          <div className="edit-actions">
+                            <button
+                              onClick={() => handleUpdate(job._id)}
+                              className="btn btn-save"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="btn btn-cancel"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="job-info">
+                            <h3>{job.jobTitle}</h3>
+                            <p className="company-name">{job.companyName}</p>
+                            <div className={`status-badge status-${job.status.toLowerCase()}`}>
+                              {job.status}
+                            </div>
+                            <p className="applied-date">
+                              Applied:{" "}
+                              {job.appliedDate
+                                ? new Date(job.appliedDate).toLocaleDateString()
+                                : "N/A"}
+                            </p>
+                          </div>
+                          <div className="job-actions">
+                            <button
+                              onClick={() => {
+                                setEditingId(job._id);
+                                setEditForm({
+                                  companyName: job.companyName,
+                                  jobTitle: job.jobTitle,
+                                  status: job.status,
+                                });
+                              }}
+                              className="btn btn-edit"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(job._id)}
+                              className="btn btn-delete"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </main>
         </div>
       )}
     </div>
